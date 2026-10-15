@@ -26,10 +26,16 @@
 
 ## 近期关键记录
 
-- 2026-10-15 防线插件「锻刀防线 Hooks」已安装（用户确认）；五子代理类型已注册生效（系统确认）——团队体系完全就绪，M0 待用户指令
-- 2026-10-15 团队体系迁移完成（gonghui → duanzao）：.zcode 五代理+MCP 配置+skill+记忆、防线插件、根 AGENTS.md；M0 未开始；git 仓库未建
+- 2026-10-15 **第二次试玩仍不可玩（视觉复核确认）**：锻炉可见但**刀坯几乎不可见**、无地面、无有效光照（平行光/OmniLight 不起效，下半屏纯黑）——疑 shader 只输出温度发光不接收光照（冷态 r=0 全黑）。已转 programmer：7 项修复清单 + auto-play 自动试玩流程
+- 2026-10-15 **用户指令第二轮：改完必须自己实际验证（亲手玩）**——新永久流程：programmer 修完跑 auto-play（真实渲染驱动完整玩法序列逐步截图 reports/playtest/）→ **停下等 Team Lead 视觉侧车逐张审图** → 不通过打回重改，通过才交用户。已写入 AGENTS.md。教训：视觉冒烟阈值在太暗画面上校准过宽（mean 0.0197 都能过），修后须重校并加砧区亮度/对比度判据
+- 2026-10-15 **黑屏已修（根因：.tscn 变换列/行主序写反致相机转置看天）**，selfcheck 三级 28/28+冒烟绿——但画面仍不合格，进入第二轮修复
+- 2026-10-15 **M0 代码完成**：CC0 采样；agentId：programmer=agent_a6c2681d、architect=agent_d0d37e4d、git-admin=agent_25eb8c2f
+- 2026-10-15 M0 方案用户通过；git 仓库已建（main，cbfffdd+42e9f87，无远程）；防线插件已装、五代理已注册
+- 2026-10-15 团队体系迁移完成（gonghui → duanzao）
 
 ## 当前阶段与下一步
 
-- **M0 技术原型（未开始）**：截面刀坯网格 + 温度 shader + 锻打手感五件套（火花/锤声/震屏/锤击动画/形变），2~3 周——锻打手感是全项目最大风险，前置验证
-- M0 前置条件：安装 Godot 4 + 编辑器内装 godot_ai 插件（addons 可从 gonghui 的 DEMO/addons/godot_ai 复制）；selfcheck.cmd 待工程建立后参照 gonghui 版改造
+- **收尾指令链执行中（2026-10-16）**：①三修改完成+粗检（数值全绿；机器主观保留项留用户复验）✅ ②日志已记录 ✅ ③@git-admin 提交+推送进行中（origin=github.com/ligoudan95/duanzao）④关机待执行
+- **下次会话第一件事**：用户复验俯视角新构建（重点：HUD 尺寸位置、锤柄静息位、左下暗部、锤鼠标跟随手感 lerp 速度）；然后 docs-updater 设计文档同步（六轮修复+视觉验证/auto-play 流程+strike_k 标定）
+- M0 手感标定现值：strike_k=2.8（锻锤单锤 20% 厚度）、刀坯 45×14mm、氧化 OXIDE_SCALE=6、俯视角 −77°/fov40
+- Godot 4.7.2 在 PATH；gdUnit4 直跑须大写 G + `--ignoreHeadlessMode`

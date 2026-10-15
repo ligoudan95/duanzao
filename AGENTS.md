@@ -114,7 +114,7 @@ Team Lead（你 = ZCode 主代理）— 唯一持久角色，协调所有子代�
 
 ## 项目速查【随项目推进回填】
 
-- 仓库：本地仓库已建（项目根 `F:\game project\duanzao`，main 分支，2026-10-15 init；尚未配置远程——建远程后回填 origin 地址）
+- 仓库：origin = `https://github.com/ligoudan95/duanzao.git`，main 分支（2026-10-16 用户提供远程地址；2026-10-15 本地 init）
 - 当前阶段：**立项完成，M0 未开始**——策划案 v0.1 与系统详细设计 v0.1 已定稿（见 docs/）；下一步 M0 技术原型：截面刀坯网格 + 温度 shader + 锻打手感五件套（火花/锤声/震屏/动画/形变），2~3 周，最大风险前置验证
 - 合规红线：赛制思想（三轮淘汰/测试裁决/限定材料）可用；节目名/真人评委形象/节目口号/舞台美术表达**全部原创**，营销素材不蹭《锻造大赛》（详见策划案 §9）
 - 目录规则：根目录 = Godot 工程（`project.godot` 待 M0 建立时落地）；`docs/` = 策划与设计文档；`tools/` = 工具脚本；`tests/` = gdUnit4 用例；根目录不放临时工作文件
@@ -130,7 +130,11 @@ Team Lead（你 = ZCode 主代理）— 唯一持久角色，协调所有子代�
   - ⑦ 纯逻辑模块测试先行：`sim/` 层公式（热传导/形变/淬火/评分）先写 gdUnit4 用例再接表现层
   - ⑧ 场景切换只经 SceneManager：SCENE_TABLE 集中映射；`addons/` 一律不改，插件升级须架构师评估
   - 确定性：所有随机走 `sim/rng.gd`（种子可指定），比赛抽签/AI 生成/淬裂掷签必须可复现
-- **程序员自查命令**：【M0 建立后回填 selfcheck.cmd（gdUnit4 全量 + headless 数据校验）；工程建立前暂用 gdUnit4 直跑：`godot --headless -s res://addons/gdUnit4/bin/gdUnitCmdTool.gd -a res://tests`】
+- **程序员自查命令**：`tools/selfcheck.cmd`（项目根工作目录运行），三级全过才算全绿：
+  1. `godot --headless --import`（导入缓存）
+  2. gdUnit4 全量测试（直跑须用 `godot --headless -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd --ignoreHeadlessMode -a res://tests -c`，注意大写 G）
+  3. **视觉冒烟验证（强制，2026-10-15 用户指令）**：非 headless 短暂开窗真实渲染主场景，按确定性场景（冷态/热态/炉光）截屏做像素统计断言（非全黑、刀坯可见、发光像素存在），截图存 `reports/visual_smoke/` 供人工复核——headless 单测检不出黑屏类故障（M0 黑屏事故教训），凡涉及渲染/场景/材质/灯光/相机的改动，此级必跑不可跳过
+- **auto-play 自动试玩 + Team Lead 视觉复核（强制，2026-10-15 用户指令第二轮）**：凡渲染/场景/材质/灯光/相机/玩法手感的改动，@programmer 修完后必须跑 auto-play 自动试玩（真实渲染驱动完整玩法序列：冷态→入炉加热→回砧锤击，逐步截图存 `reports/playtest/` 附状态 dump），**然后停下等 Team Lead 用视觉侧车逐张审图**——从玩家视角判断能不能玩，不通过带意见打回重改，通过后才交用户真人试玩。programmer 不许自判通过（拿不到渲染帧也看不见图像）；selfcheck 三级全绿只是入场券，视觉复核通过才是交付标准
 
 ## 规则
 

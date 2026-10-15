@@ -64,7 +64,7 @@ feat: 新增 XXX 功能
 ## 环境注意
 
 - Windows；ZCode 命令行环境为 **Git Bash**（路径含空格须加引号）
-- 仓库：本地仓库（项目根 `F:\game project\duanzao`，main 分支，2026-10-15 init）；**尚未配置远程**——收到推送指令时若 origin 不存在，先报告并等用户指示远程地址，不自行配置
+- 仓库：origin = `https://github.com/ligoudan95/duanzao.git`，main 分支（项目根 `F:\game project\duanzao`，2026-10-15 本地 init，2026-10-16 配置远程）
 - 提交前必须 `git status` + `git diff` 过目，只提交用户确认过的内容
 
 ## 规则
