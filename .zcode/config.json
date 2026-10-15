@@ -1,0 +1,32 @@
+{
+	"mcp": {
+		"servers": {
+			"godot-ai": {
+				"type": "stdio",
+				"command": "uvx",
+				"args": [
+					"--link-mode",
+					"copy",
+					"--from",
+					"godot-ai==4.2.3",
+					"godot-ai",
+					"attach",
+					"--port",
+					"8000",
+					"--ws-port",
+					"9500"
+				],
+				"env": {}
+			},
+			"godot-mcp": {
+				"type": "stdio",
+				"command": "npx",
+				"args": [
+					"-y",
+					"@coding-solo/godot-mcp"
+				],
+				"env": {}
+			}
+		}
+	}
+}

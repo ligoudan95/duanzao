@@ -1,0 +1,7 @@
+{
+  "name": "duanzao-defense",
+  "version": "0.3.0",
+  "description": "锻刀大师团队工作流防线：AskUserQuestion 强制人工确认 + 超时未答复冻结注入",
+  "author": { "name": "duanzao-team" },
+  "hooks": "./hooks/hooks.json"
+}

@@ -1,0 +1,15 @@
+{
+  "name": "dev-duanzao",
+  "plugins": [
+    {
+      "name": "duanzao-defense",
+      "source": "./duanzao-defense",
+      "version": "0.3.0",
+      "description": "锻刀大师团队工作流防线 hooks",
+      "displayName": "Duanzao Defense Hooks",
+      "displayName_i18n": { "zh-CN": "锻刀防线 Hooks" },
+      "description_i18n": { "zh-CN": "AskUserQuestion 强制人工确认 + 超时未答复冻结注入（团队工作流防线，随仓库分发）" },
+      "category": "developer-tools"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# ZCode 会话工件（团队配置 .zcode/agents|docs|memory 与 config.json 入库）
+.zcode/plans/
+
+# 系统与临时文件
+Thumbs.db
+Desktop.ini
+~*
+*.tmp
+
+# gdUnit / 校验器运行时产物
+reports/
