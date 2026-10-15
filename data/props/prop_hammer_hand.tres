@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="HammerDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://sim/hammer_def.gd" id="1_hammerdef"]
+
+[resource]
+script = ExtResource("1_hammerdef")
+id = "prop_hammer_hand"
+display_name = "手锤"
+; 手锤：轻、应力小、微震
+power = 0.4
+stress_mult = 0.5
+shake_trauma = 0.15

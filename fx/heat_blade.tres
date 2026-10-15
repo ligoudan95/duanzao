@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3]
+
+[ext_resource type="Shader" path="res://fx/heat_blade.gdshader" id="1_heatshader"]
+[ext_resource type="Texture2D" path="res://fx/heat_color_lut.png" id="2_heatlut"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_heatshader")
+shader_parameter/heat_lut = ExtResource("2_heatlut")
+shader_parameter/steel_albedo = Color(0.6, 0.6, 0.64, 1)
+shader_parameter/steel_metallic = 0.9
+shader_parameter/steel_roughness = 0.4
+shader_parameter/emission_strength = 3.0
+shader_parameter/oxide_albedo = Color(0.13, 0.105, 0.09, 1)

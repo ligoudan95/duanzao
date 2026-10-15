@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SteelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://sim/steel_def.gd" id="1_steeldef"]
+
+[resource]
+script = ExtResource("1_steeldef")
+id = "steel_1084"
+display_name = "1084"
+; 轴向传导系数
+alpha = 0.08
+; 散热基准（标定目标：850°C 静置约 100s 降到 700°C，端段 ×1.6）
+beta_base = 0.0006
+th_ref = 8.0

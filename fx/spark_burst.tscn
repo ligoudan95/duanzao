@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://fx/spark_burst.gd" id="1_sparkburst"]
+
+[node name="SparkBurst" type="GPUParticles3D"]
+amount = 16
+lifetime = 0.45
+one_shot = true
+explosiveness = 1.0
+script = ExtResource("1_sparkburst")

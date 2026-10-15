@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ForgeDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://sim/forge_def.gd" id="1_forgedef"]
+
+[resource]
+script = ExtResource("1_forgedef")
+id = "prop_forge_coal"
+; 炉力：power·heat_gain = 60 °C/s（标定目标：炉内段约 60 °C/s）
+power = 3.0
+heat_gain = 20.0
+flux_amplitude = 0.15
+flux_period = 1.0
