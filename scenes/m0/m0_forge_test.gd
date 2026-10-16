@@ -35,11 +35,19 @@ const COVERAGE_EDGE_FADE: float = 0.02
 ## 锤子鼠标跟随平滑系数（越大跟得越紧）
 const HAMMER_FOLLOW_LERP: float = 12.0
 
-## 摆角 ±33° 下支点到锤头的水平投影（瞄准位 = 锤支点 x − 此值）
-const HAMMER_ARM_REACH: float = 0.4195
+## 锤子自由移动的固定工作台范围（世界 x，与刀坯位置无关）：
+## 左端 = 砧面左缘 -0.32（Face 宽 0.64 居中）外放 4cm；右端 = 探入炉口（0.57~1.08）18cm
+const HAMMER_WORKSPACE_MIN: float = -0.36
+const HAMMER_WORKSPACE_MAX: float = 0.75
 
-## 锤支点固定高度（摆角 33° 时锤底正好触刀面 0.454）
-const HAMMER_PIVOT_Y: float = 0.751
+## 打空/打砧火花高度：砧面顶（Face 中心 0.38 + 半高 0.06 = 0.44，与煤床顶同高平面）
+const MISS_FX_Y: float = 0.44
+
+## 摆角 ±33° 下支点到锤头的水平投影（= 0.34 × cos33°；瞄准位 = 锤支点 x − 此值）
+const HAMMER_ARM_REACH: float = 0.2852
+
+## 锤支点固定高度（= 刀面 0.454 + 锤头半高 0.025 + 0.34 × sin33°，落锤 +33° 时锤底正好触刀面）
+const HAMMER_PIVOT_Y: float = 0.6642
 
 ## 锤击火花/闪光参考高度（刀面上方一点）
 const STRIKE_FX_Y: float = 0.46
@@ -76,8 +84,8 @@ var _hammer_target_x: float = 0.0
 @onready var _camera_shake: Camera3D = $MainCamera
 @onready var _forge_light: OmniLight3D = $ForgeRig/ForgeLight
 @onready var _blade_glow: OmniLight3D = $BladeRig/BladeGlow
-@onready var _hud: CanvasLayer = $DebugHUD
-@onready var _hud_label: Label = $DebugHUD/Label
+@onready var _hud_label: Label = $DebugHUD/DataPanel
+@onready var _hud_toggle_btn: Button = $DebugHUD/ToggleBtn
 
 
 func _ready() -> void:
@@ -88,6 +96,9 @@ func _ready() -> void:
 
 	_hammers.append(load(PATH_HAMMER_HAND) as HammerDef)
 	_hammers.append(load(PATH_HAMMER_FORGE) as HammerDef)
+
+	# 数据页签切换按钮（常驻小按钮，与 F3 同效）
+	_hud_toggle_btn.pressed.connect(_toggle_hud)
 
 	_reset_simulation()
 
@@ -192,12 +203,19 @@ func _input(event: InputEvent) -> void:
 	elif event.is_action_pressed("reset_blade"):
 		_reset_simulation()
 	elif event.is_action_pressed("toggle_debug_hud"):
-		_hud.visible = not _hud.visible
+		_toggle_hud()
 	elif event.is_action_pressed("quit_m0"):
 		get_tree().quit()
 
 
-## 锤子沿刀坯轴向平滑跟随鼠标：鼠标射线投到刀坯高度平面取 x，clamp 到刀坯范围，
+## 切换数据面板显隐并同步按钮文案（面板默认隐藏不遮挡画面，F3 与按钮同效）
+func _toggle_hud() -> void:
+	_hud_label.visible = not _hud_label.visible
+	_hud_toggle_btn.text = "隐藏 [F3]" if _hud_label.visible else "数据 [F3]"
+
+
+## 锤子沿固定工作台范围自由跟随鼠标（与刀坯位置解绑）：鼠标射线投到瞄准高度平面取 x，
+## 钳到固定工作台范围（砧面+炉口）——刀坯 A/D 平移不再带动锤子；
 ## 锤支点 x = 瞄准位 + HAMMER_ARM_REACH（±33° 对称摆角保证静息/落锤锤头同 x，瞄准即所见）
 func _update_hammer_follow(delta: float) -> void:
 	var camera := get_viewport().get_camera_3d()
@@ -205,29 +223,39 @@ func _update_hammer_follow(delta: float) -> void:
 	var ray_origin := camera.project_ray_origin(mouse_pos)
 	var ray_normal := camera.project_ray_normal(mouse_pos)
 
-	# 与刀坯中心水平面求交（俯视角下 |n.y| 接近 1）
+	# 与瞄准水平面求交（俯视角下 |n.y| 接近 1）
 	if absf(ray_normal.y) > 0.1:
 		var t := (AIM_PLANE_Y - ray_origin.y) / ray_normal.y
 
 		if t > 0.0:
 			var aim_x: float = ray_origin.x + ray_normal.x * t
-			var blade_left: float = _blade_rig.position.x + 0.002
-			var blade_right: float = _blade_rig.position.x + _cfg_m0.blank_length * 0.001 - 0.002
 
-			# 刀坯在画面外（远处）时钳到最近端，保证锤始终有定义
-			aim_x = clampf(aim_x, blade_left, blade_right)
+			# 固定工作台钳制：锤位只取决于鼠标，与刀坯位置完全无关
+			aim_x = clampf(aim_x, HAMMER_WORKSPACE_MIN, HAMMER_WORKSPACE_MAX)
 			_hammer_target_x = lerpf(_hammer_target_x, aim_x,
 				minf(1.0, delta * HAMMER_FOLLOW_LERP))
 			_hammer_rig.position.x = _hammer_target_x + HAMMER_ARM_REACH
 			_hammer_rig.position.y = HAMMER_PIVOT_Y
 
 
-## 尝试一次锤击：命中段 = 锤头当前瞄准位（不再是斜射线拾取），顶面锻打
+## 尝试一次锤击：瞄准位落在刀坯跨度内（含半段容差）→ 顶面锻打；跨度外 → 打砧/挥空，
+## 只播动画/音效/轻震反馈，不进 ForgeSim（无形变、无应力、无闪光），冷却照常计
 func _try_strike() -> void:
 	_strike_cooldown = _cfg_m0.strike_cooldown
 	_hammer_anim.play_impact()
 
 	var local_mm: float = (_hammer_target_x - _blade_rig.position.x) * 1000.0
+	var half_seg_mm: float = _blade.segment_length * 0.5
+	var blade_span_mm: float = _blade.segment_length * _blade.sections.size()
+
+	# 打砧/挥空：环境温度反馈（火花曲线低温端近零、冷金属音、半幅震屏），模拟数据零变更
+	if local_mm < -half_seg_mm or local_mm > blade_span_mm + half_seg_mm:
+		var miss_pos := Vector3(_hammer_target_x, MISS_FX_Y, 0.0)
+		_spark.burst(miss_pos, Vector3.UP, _cfg.t_ambient, _cfg_m0.spark_curve)
+		_sfx.play_strike(_cfg.t_ambient)
+		_camera_shake.add_trauma(_hammers[_hammer_index].shake_trauma * 0.5)
+		return
+
 	var seg: int = clampi(
 		int(round(local_mm / _blade.segment_length - 0.5)),
 		0, _blade.sections.size() - 1)
