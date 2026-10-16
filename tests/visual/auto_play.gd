@@ -28,6 +28,18 @@ const STRIKE_COUNT: int = 3
 ## 移动键保持单步超时（秒）
 const MOVE_TIMEOUT_SECONDS: float = 12.0
 
+## 瞄准收敛等待期内重发 warp 间隔（秒）：在用桌面真实鼠标会拉走指针，定期压回目标
+const AIM_REWARP_INTERVAL: float = 0.2
+
+## 点击前鼠标位回读容差（px）：视口鼠标位与目标屏幕坐标偏出此值则重 warp 复核
+const AIM_READBACK_TOLERANCE: float = 3.0
+
+## 回读复核重试上限（次）：超限仍偏移则尽力发点击并告警，末态玩法校验兜底判定
+const AIM_REWARP_MAX_RETRIES: int = 10
+
+## 点击前锤收敛门控容差（段长倍数）：hammer_target_x 距目标 world.x 超出即视为未收敛
+const AIM_HAMMER_CONV_SEGS: float = 1.0
+
 ## 末态校验：加热后最热段温度下限（°C，经真实输入链路完成）
 const HEATED_TEMP_MIN: float = 600.0
 
@@ -203,6 +215,8 @@ func _hold_move_key(key: Key, target_x: float, timeout_seconds: float) -> bool:
 
 ## 鼠标移动到目标段上方（warp_mouse 真实移动指针驱动锤跟随），待收敛后左键挥击。
 ## 命中段=锤头位置（胶水层新链路），无斜射补偿需求。
+## 在用桌面加固（2026-10-16 批准）：收敛期内每 0.2s 重发 warp 压住目标；
+## 点击前双门控——鼠标位回读 ≤3px 且锤瞄准位距目标 ≤1 段长，重 warp 等一帧复核至双过才发点击。
 func _aim_and_click(seg_index: int) -> void:
 	var sec: BladeData.SectionData = _get_blade().sections[seg_index]
 	var world := Vector3(_blade_rig.position.x + sec.x * 0.001, 0.447, 0.0)
@@ -212,10 +226,46 @@ func _aim_and_click(seg_index: int) -> void:
 	get_viewport().warp_mouse(screen)
 	await get_tree().process_frame
 
-	# 等锤子 lerp 跟随收敛（12/s → 0.6s 后残差 <0.1%）
-	await _wait_seconds(0.6)
-	_log("aim: seg=%d world_x=%.4f hammer_target_x=%.4f" % [
-		seg_index, world.x, float(_glue.get("_hammer_target_x"))])
+	# 等锤子 lerp 跟随收敛（12/s → 0.6s 后残差 <0.1%）；期间定期重发 warp 对抗外力拉扯
+	var elapsed: float = 0.0
+
+	while elapsed < 0.6:
+		var step: float = minf(AIM_REWARP_INTERVAL, 0.6 - elapsed)
+		await _wait_seconds(step)
+		elapsed += step
+		get_viewport().warp_mouse(screen)
+
+	# 点击前双门控（2026-10-16 批准）：①视口鼠标位回读 ≤ 容差 px；②锤瞄准位距目标
+	# world.x ≤ 1 段长（修"鼠标已归位而锤 lerp 未跟上"的假通过）。
+	# 任一条件不满足即重 warp 等一帧复核（复用同一重试循环），两条件同时通过才发点击
+	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
+	var hammer_target: float = float(_glue.get("_hammer_target_x"))
+	var hammer_tol: float = _get_blade().segment_length * 0.001 * AIM_HAMMER_CONV_SEGS
+	var retries: int = 0
+
+	while (mouse_pos.distance_to(screen) > AIM_READBACK_TOLERANCE
+			or absf(hammer_target - world.x) > hammer_tol) and retries < AIM_REWARP_MAX_RETRIES:
+		retries += 1
+		get_viewport().warp_mouse(screen)
+		await get_tree().process_frame
+		mouse_pos = get_viewport().get_mouse_position()
+		hammer_target = float(_glue.get("_hammer_target_x"))
+
+	# 重试超限仍不达标：尽力发点击并分类留痕（末态玩法校验兜底，不在测试基础设施层新增失败模式）
+	if retries >= AIM_REWARP_MAX_RETRIES:
+		var mouse_off_px: float = mouse_pos.distance_to(screen)
+
+		if mouse_off_px > AIM_READBACK_TOLERANCE:
+			_log("aim: 回读 %d 次仍偏移 %.1fpx，尽力发点击（若末态失败此为根因）" % [
+				retries, mouse_off_px])
+
+		if absf(hammer_target - world.x) > hammer_tol:
+			_log("aim: 回读 %d 次锤瞄准仍偏 %.2fmm（容差 %.2fmm），尽力发点击（若末态失败此为根因）" % [
+				retries, absf(hammer_target - world.x) * 1000.0, hammer_tol * 1000.0])
+
+	_log("aim: seg=%d world_x=%.4f hammer_target_x=%.4f mouse_off=(%+.1f,%+.1f)" % [
+		seg_index, world.x, float(_glue.get("_hammer_target_x")),
+		mouse_pos.x - screen.x, mouse_pos.y - screen.y])
 
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
